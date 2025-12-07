@@ -1,27 +1,29 @@
 // Элементы DOM
-
-// const mainContent = document.querySelector(".container");
+const mainContent = document.querySelector(".container");
 const nameInput = document.querySelector(".add-players-name-input");
 const addButton = document.querySelector(".add-players-name-button");
-const playBtnContainer = document.querySelector(".play-button-appearing");
+const playBtnContainer = document.querySelector(".play-button-location");
 const playersContainer = document.querySelector(".player-frames-container");
+const startContainer = document.querySelector(".start-interactives-container");
+const gameMeshContainer = document.querySelector(".game-mesh-container");
+gameMeshContainer.style.display = "none"; // чтобы не делал лишних отступов
 
 // const  = document.querySelector(".");
 
 let playersPool = [];
 
-addButton.addEventListener("click", function() { //позже сделаю функцию отдельной, чтобы повесить на обработчики кнопки и enter
 
-    const playerName = nameInput.value;
+function addPlayer() {
+    const playerName = nameInput.value.trim();
 
-    // Проверки на наличие имени, пустое поле и количество игроков
-    if (playersPool.includes(playerName)) {
-        nameInput.value = "";
-        alert("Такое имя уже есть");
+    // Проверки на пустое поле, дубликат и количество игроков
+    if (playerName === "") {
         return;
     }
 
-    if (playerName.trim() === "") {
+    if (playersPool.includes(playerName)) {
+        nameInput.value = "";
+        alert("Такое имя уже есть");
         return;
     }
 
@@ -38,7 +40,7 @@ addButton.addEventListener("click", function() { //позже сделаю фу�
 
     playersPool.push(playerName);
     appearPlayBtn();
-});
+}
 
 function appearPlayBtn() {
     if (playersPool.length === 2) {
@@ -47,9 +49,60 @@ function appearPlayBtn() {
         playBtn.textContent = "Играть";
 
         playBtnContainer.appendChild(playBtn);
+
+        // Обработчик на кнопку внутри функции, потому что playBtn - локальная константа
+        playBtn.addEventListener("click", startGame);
     }
 }
 
-playBtn.addEventListener("click", function() { 
-    
+// Добавление игрока по кнопке
+addButton.addEventListener("click", addPlayer);
+
+// Добавление игрока по клавише enter (даже нампадовской)
+nameInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" || event.keyCode === 13 || event.code === "NumpadEnter") {
+        addPlayer();
+    }
 });
+
+
+// Функция для старта игры
+function startGame() {
+    // Убираю путём none и блока, потому что иннер тяжелее контролировать
+    startContainer.style.display = "none";
+    playBtnContainer.style.display = "none";
+    gameMeshContainer.style.display = "block";
+
+    // опять же я создавал фреймы внутри функции, из-за чего их нужно получать заново
+    const playerFrames = document.querySelectorAll('.player-frame'); 
+    playerFrames.forEach(frame => {
+        frame.classList.replace('player-frame', 'game-player-frame');
+    });
+
+    // Новые селекторы для фреймов (чтобы избавиться от ховера):
+    /*
+    game-player-frame
+    act-game-player-frame       (активный игрок)
+    */
+
+    // Создание таблицы-сетки
+    const gameMesh = document.createElement("table");
+    gameMesh.className = "game-mesh";
+    gameMeshContainer.appendChild(gameMesh);
+
+    for (let i = 0; i < 3; i++) {
+        const row = document.createElement("tr");
+        row.className = "row-mesh";
+        gameMesh.appendChild(row);
+
+        for (let j = 0; j < 3; j++) {
+            const col = document.createElement("td");
+            col.className = "col-mesh";
+            //Формула для индексирования ячеек (i * 3 + j) + 1
+            col.id = `cell-${(i * 3 + j) + 1}`;
+            row.appendChild(col);
+        }
+    }
+}
+
+
