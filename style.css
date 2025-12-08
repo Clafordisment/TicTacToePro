@@ -132,6 +132,7 @@ body {
 
 .player-frame {
     display: flex;
+    position: relative;
     background-color: #909090;
     border: 0.2px solid;
     border-color: #DCDCDC;
@@ -150,6 +151,18 @@ body {
     background-color: #A9A9A9;
     color: #ffffff;
     transform: scale(1.1);
+}
+
+
+.del-player-button {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 20px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    color: red;
 }
 
 .game-player-frame {
@@ -172,6 +185,43 @@ body {
     background-color: #A9A9A9;
     color: #ffffff;
     transform: scale(1.1);
+}
+
+.player-role-container {
+    position: absolute;
+    bottom: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.player-role-cross {
+    position: absolute;
+    font-size: 20px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    color: #B22222;
+    transition: color 0.2s ease;
+}
+
+.act-player-role-cross {
+    color: red;
+}
+
+.player-role-nought {
+    position: absolute;
+    bottom: 10px;
+    font-size: 20px;
+    font-weight: 600;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    color: darkblue;
+    transition: color 0.2s ease;
+}
+
+.act-player-role-nought {
+    color: blue;
 }
 
 /* #endregion */
