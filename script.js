@@ -11,7 +11,20 @@ gameMeshContainer.style.display = "none"; // чтобы не делал лишн
 // const  = document.querySelector(".");
 
 let playersPool = [];
-let crossPlayer, noughtPlayer, actPlayerName;
+
+// Класс для игрового описания игрока
+class GamePlayer {
+    constructor(name) {
+        this.name = name;                     // str
+        this.rule = "";                       // str (◯ или ✖)
+        this.isAct = false;                   // bool
+        this.firstMove = true;                // bool
+        this.moveHistory = [];                // collection
+        this.frameElement = null;             // DOM элемент фрейма
+    }
+}
+
+let gamePlayers = []; // Массив объектов GamePlayer
 
 function addPlayer() {
     const playerName = nameInput.value.trim();
@@ -31,17 +44,22 @@ function addPlayer() {
         alert("Игроков не должно быть больше 2-х!");
         return;
     }
+    
+    const playerFrame = document.createElement("div");
+    playerFrame.className = "player-frame";
+    playerFrame.textContent = playerName;
+    playersContainer.appendChild(playerFrame);
+    
+    const playerObj = new GamePlayer(playerName);
+    playerObj.frameElement = playerFrame;
+    gamePlayers.push(playerObj);
 
-    const player = document.createElement("div");
-    player.className = "player-frame";
-    player.textContent = playerName;
-    playersContainer.appendChild(player);
     nameInput.value = "";
 
     const deletePlayerBtn = document.createElement("button");
     deletePlayerBtn.className = "del-player-button";
     deletePlayerBtn.textContent = "×"; // взял посторонний символ, чтобы не был под влиянием шрифта
-    player.appendChild(deletePlayerBtn);
+    playerFrame.appendChild(deletePlayerBtn);
 
     // Так как создали кнопку через функию, вешаю обработчик внутри
     // Удаление игрока
@@ -54,6 +72,7 @@ function addPlayer() {
     appearPlayBtn();
 }
 
+// Функция удаления игрока 
 function deletePlayer(playerFrame) {
     const allTextOfFrames = playerFrame.textContent;
     const playerName = allTextOfFrames.replace("×", "").trim();
@@ -67,11 +86,17 @@ function deletePlayer(playerFrame) {
     else {
         playersPool.splice(iForDel, 1);
     }
+    
+    const playerObjIndex = gamePlayers.findIndex(player => player.name === playerName);
+    if (playerObjIndex !== -1) {
+        gamePlayers.splice(playerObjIndex, 1);
+    }
 
     playerFrame.remove();
     appearPlayBtn(); // удаление кнопки "Играть" в случае, если она появилась (допфункция метода в блоке else)
 }
 
+// Появление или исчезновение кнопки "Играть"
 function appearPlayBtn() {
     const existPlayBtn = document.querySelector(".play-button");
 
@@ -117,7 +142,6 @@ function startGame() {
         btn.style.display = "none";
     });
 
-
     // опять же я создавал фреймы внутри функции, из-за чего их нужно получать заново
     const playerFrames = document.querySelectorAll('.player-frame');
     playerFrames.forEach(frame => {
@@ -132,8 +156,8 @@ function startGame() {
 
     const gamePlayerFrames = document.querySelectorAll('.game-player-frame');
 
-    setRules(gamePlayerFrames);
-    activePlayer(gamePlayerFrames);
+    setRules(gamePlayers);
+    activePlayer(gamePlayers);
 
     // Создание таблицы-сетки
     const gameMesh = document.createElement("table");
@@ -146,74 +170,97 @@ function startGame() {
         gameMesh.appendChild(row);
 
         for (let j = 0; j < 3; j++) {
+            let colIndex = 0;
             const col = document.createElement("td");
             col.className = "col-mesh";
             //Формула для индексирования ячеек (i * 3 + j) + 1 (гениально u-u)
-            col.id = `cell-${(i * 3 + j) + 1}`;
+            colIndex = (i * 3 + j) + 1;
+            col.id = `cell-${colIndex}`;
+            col.dataset.index = colIndex;
+            col.dataset.value = "";
+
+            //Обработчик для ячеек, чтобы активный игрок мог сделать ход
+            col.addEventListener("click", function () {
+                
+            });
+
             row.appendChild(col);
         }
     }
-
 }
 
 // Сетап ролей игроков (распред на крестики и нолики)
-function setRules(frames) {
-    const playerFrames = frames;
+function setRules(playerObjects) {
+    const hasRoles = playerObjects.some(player => player.rule !== "");
 
-    const hasRoles = Array.from(playerFrames).some(frame =>
-        frame.classList.contains("player-role-cross") ||
-        frame.classList.contains("player-role-nought")
-    );
+    if (!hasRoles && playerObjects.length >= 2) {
+        const randIndex = Math.floor(Math.random() * playerObjects.length);
 
-    if (!hasRoles) {
-        const randIndex = Math.floor(Math.random() * playerFrames.length);
-
-        // Отладочные строки
-        let getPlayerName = playersPool[randIndex];
-        console.log(`Крестиком выбран ${getPlayerName}`);
-
-        playerFrames.forEach((frame, index) => {
+        // Назначение ролей игрокам 
+        playerObjects.forEach((playerObj, index) => {
             if (index === randIndex) {
-                crossPlayer = document.createElement("div");
-                crossPlayer.className = "player-role-cross";
-                crossPlayer.textContent = "✖";
-                frame.appendChild(crossPlayer);
+                playerObj.rule = "✖"
+
+                if (playerObj.frameElement) {
+                    const crossPlayer = document.createElement("div");
+                    crossPlayer.className = "player-role-cross";
+                    crossPlayer.textContent = "✖";
+                    playerObj.frameElement.appendChild(crossPlayer);
+                }
+                
+                console.log(`Крестиком выбран ${playerObj.name}`);
             } else {
-                noughtPlayer = document.createElement("div");
-                noughtPlayer.className = "player-role-nought";
-                noughtPlayer.textContent = "◯";
-                frame.appendChild(noughtPlayer);
+                playerObj.rule = "◯";
+                
+                if (playerObj.frameElement) {
+                    const noughtPlayer = document.createElement("div");
+                    noughtPlayer.className = "player-role-nought";
+                    noughtPlayer.textContent = "◯";
+                    playerObj.frameElement.appendChild(noughtPlayer);
+                }
+                
+                console.log(`Ноликом выбран ${playerObj.name}`);
             }
         });
     }
 }
 
+function activePlayer(playerObjects) {
+    const randIndex = Math.floor(Math.random() * playerObjects.length);
+    
+    playerObjects.forEach((playerObj, index) => {
 
-function activePlayer(frames) {
-    const playerFrames = frames;
-    const randIndex = Math.floor(Math.random() * playerFrames.length);
+        // Съём активности и её стилей 
+        playerObj.isAct = false;
 
-    playerFrames.forEach((frame, index) => {
-        if (index === randIndex) {
-            actPlayerName = frame.textContent
-                .replace("×", "")
-                .replace("✖", "")
-                .replace("◯", "")
-                .trim();
-            console.log(`Активным игроком выбран ${actPlayerName}`);
+        if (playerObj.frameElement) {
+            playerObj.frameElement.classList.remove("act-game-player-frame");
 
-            frame.classList.add("act-game-player-frame");
-
-            if (frame.classList.contains("player-role-cross")) {
-                crossPlayer.classList.add("act-player-role-cross");
+            const roleElement = playerObj.frameElement.querySelector(".player-role-cross, .player-role-nought");
+            if (roleElement) {
+                roleElement.classList.remove("act-player-role-cross", "act-player-role-nought");
             }
-            else if (frame.classList.contains("player-role-nought")) {
-                noughtPlayer.classList.add("act-player-role-nought");
+        }
+        
+        // Объявление активности
+        if (index === randIndex) {
+            playerObj.isAct = true;
+            console.log(`Активным игроком выбран ${playerObj.name}`);
+
+            if (playerObj.frameElement) {
+                playerObj.frameElement.classList.add("act-game-player-frame");
+                const roleElement = playerObj.frameElement.querySelector(".player-role-cross, .player-role-nought");
+                if (roleElement) {
+                    if (playerObj.rule === "✖") {
+                        roleElement.classList.add("act-player-role-cross");
+                    } else {
+                        roleElement.classList.add("act-player-role-nought");
+                    }
+                }
             }
         }
     });
 }
-
 
 // 1, 2, 3
 // 4, 5, 6
@@ -231,6 +278,3 @@ const winCombos = [
     [1, 5, 9], // Диагональ с правого нижнего на верхний левый 
     [3, 5, 7]  // Диагональ с левого нижнего на верхний правый
 ];
-
-
-

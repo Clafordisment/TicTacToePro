@@ -167,6 +167,7 @@ body {
 
 .game-player-frame {
     display: flex;
+    position: relative;
     background-color: #909090;
     border: 0.2px solid;
     border-color: #DCDCDC;
@@ -181,25 +182,18 @@ body {
     transition: all 0.5s ease;
 }
 
-.act-game-player-frame:hover {
+.act-game-player-frame {
     background-color: #A9A9A9;
     color: #ffffff;
     transform: scale(1.1);
 }
 
-.player-role-container {
-    position: absolute;
-    bottom: 10px;
-    justify-content: center;
-    align-items: center;
-}
-
 .player-role-cross {
     position: absolute;
+    bottom: 10px;
     font-size: 20px;
     border: none;
     background-color: transparent;
-    cursor: pointer;
     color: #B22222;
     transition: color 0.2s ease;
 }
@@ -215,7 +209,6 @@ body {
     font-weight: 600;
     border: none;
     background-color: transparent;
-    cursor: pointer;
     color: darkblue;
     transition: color 0.2s ease;
 }
