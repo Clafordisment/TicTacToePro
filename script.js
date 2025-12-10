@@ -16,7 +16,7 @@ let playersPool = [];
 class GamePlayer {
     constructor(name) {
         this.name = name;                     // str
-        this.rule = "";                       // str (◯ или ✖)
+        this.role = "";                       // str (⭘ или ✖)
         this.isAct = false;                   // bool
         this.firstMove = true;                // bool
         this.moveHistory = [];                // collection
@@ -44,12 +44,12 @@ function addPlayer() {
         alert("Игроков не должно быть больше 2-х!");
         return;
     }
-    
+
     const playerFrame = document.createElement("div");
     playerFrame.className = "player-frame";
     playerFrame.textContent = playerName;
     playersContainer.appendChild(playerFrame);
-    
+
     const playerObj = new GamePlayer(playerName);
     playerObj.frameElement = playerFrame;
     gamePlayers.push(playerObj);
@@ -86,7 +86,7 @@ function deletePlayer(playerFrame) {
     else {
         playersPool.splice(iForDel, 1);
     }
-    
+
     const playerObjIndex = gamePlayers.findIndex(player => player.name === playerName);
     if (playerObjIndex !== -1) {
         gamePlayers.splice(playerObjIndex, 1);
@@ -154,9 +154,9 @@ function startGame() {
     act-game-player-frame       (активный игрок)
     */
 
-    const gamePlayerFrames = document.querySelectorAll('.game-player-frame');
+    // const gamePlayerFrames = document.querySelectorAll('.game-player-frame');
 
-    setRules(gamePlayers);
+    setRoles(gamePlayers);
     activePlayer(gamePlayers);
 
     // Создание таблицы-сетки
@@ -181,7 +181,20 @@ function startGame() {
 
             //Обработчик для ячеек, чтобы активный игрок мог сделать ход
             col.addEventListener("click", function () {
-                
+                const actPlayer = gamePlayers.find(p => p.isAct);
+                if (!actPlayer) return;
+                // выход из функии, если ячейка занята. Учитывая, что в игре даже на четвёртом ходе нельзя занимать предыдущую клетку, то это полезная строка
+                if (this.textContent !== "") return; 
+
+                this.textContent = actPlayer.role;
+
+                if (actPlayer && actPlayer.role === "✖") {
+                    this.classList.add("col-cross");
+                }
+                else {
+                    this.classList.add("col-nought");
+                }
+                switchPlayer();
             });
 
             row.appendChild(col);
@@ -190,8 +203,8 @@ function startGame() {
 }
 
 // Сетап ролей игроков (распред на крестики и нолики)
-function setRules(playerObjects) {
-    const hasRoles = playerObjects.some(player => player.rule !== "");
+function setRoles(playerObjects) {
+    const hasRoles = playerObjects.some(player => player.role !== "");
 
     if (!hasRoles && playerObjects.length >= 2) {
         const randIndex = Math.floor(Math.random() * playerObjects.length);
@@ -199,26 +212,28 @@ function setRules(playerObjects) {
         // Назначение ролей игрокам 
         playerObjects.forEach((playerObj, index) => {
             if (index === randIndex) {
-                playerObj.rule = "✖"
+                playerObj.role = "✖"
 
                 if (playerObj.frameElement) {
                     const crossPlayer = document.createElement("div");
                     crossPlayer.className = "player-role-cross";
                     crossPlayer.textContent = "✖";
+                    playerObj.frameElement.style.backgroundColor = "#976767";
                     playerObj.frameElement.appendChild(crossPlayer);
                 }
-                
+
                 console.log(`Крестиком выбран ${playerObj.name}`);
             } else {
-                playerObj.rule = "◯";
-                
+                playerObj.role = "⭘";
+
                 if (playerObj.frameElement) {
                     const noughtPlayer = document.createElement("div");
                     noughtPlayer.className = "player-role-nought";
-                    noughtPlayer.textContent = "◯";
+                    noughtPlayer.textContent = "⭘";
+                    playerObj.frameElement.style.backgroundColor = "rgb(83, 83, 131)";
                     playerObj.frameElement.appendChild(noughtPlayer);
                 }
-                
+
                 console.log(`Ноликом выбран ${playerObj.name}`);
             }
         });
@@ -227,7 +242,7 @@ function setRules(playerObjects) {
 
 function activePlayer(playerObjects) {
     const randIndex = Math.floor(Math.random() * playerObjects.length);
-    
+
     playerObjects.forEach((playerObj, index) => {
 
         // Съём активности и её стилей 
@@ -241,7 +256,7 @@ function activePlayer(playerObjects) {
                 roleElement.classList.remove("act-player-role-cross", "act-player-role-nought");
             }
         }
-        
+
         // Объявление активности
         if (index === randIndex) {
             playerObj.isAct = true;
@@ -251,7 +266,7 @@ function activePlayer(playerObjects) {
                 playerObj.frameElement.classList.add("act-game-player-frame");
                 const roleElement = playerObj.frameElement.querySelector(".player-role-cross, .player-role-nought");
                 if (roleElement) {
-                    if (playerObj.rule === "✖") {
+                    if (playerObj.role === "✖") {
                         roleElement.classList.add("act-player-role-cross");
                     } else {
                         roleElement.classList.add("act-player-role-nought");
@@ -261,6 +276,60 @@ function activePlayer(playerObjects) {
         }
     });
 }
+
+//Функция смены игрока
+function switchPlayer() {
+    // Решил перейти с перебора игроков на их нахождение с помощью find 
+    const actPlayer = gamePlayers.find(p => p.isAct);
+
+    // Условие для отладки
+    if (!actPlayer) {
+        console.log("Для выполнения функции switchPlayer не был найден игрок (undefined)");
+        return;
+    }
+
+    const actIndex = gamePlayers.indexOf(actPlayer);
+
+    // формула индекса, определяющая следующего игрока:
+    // если остаток от деления 1 -> переход к второму игроку.
+    // Если 0 -> переход к первому
+    const nextPlayer = gamePlayers[(actIndex + 1) % gamePlayers.length];
+
+    const actRoleEl = actPlayer.frameElement.querySelector(".player-role-cross, .player-role-nought");
+    const nextRoleEl = nextPlayer.frameElement.querySelector(".player-role-cross, .player-role-nought");
+
+    actPlayer.isAct = false;
+    actPlayer.frameElement.classList.remove("act-game-player-frame");
+    if (actRoleEl) {
+        actRoleEl.classList.remove("act-player-role-cross", "act-player-role-nought");
+    }
+
+    nextPlayer.isAct = true;
+    nextPlayer.frameElement.classList.add("act-game-player-frame");
+    if (nextRoleEl) {
+        if (nextPlayer.role === "✖") {
+            nextRoleEl.classList.add("act-player-role-cross");
+        } else if (nextPlayer.role === "⭘") {
+            nextRoleEl.classList.add("act-player-role-nought");
+        }
+    }
+}
+
+
+// function sleep(ms) {
+//     return new Promise(resolve => setTimeout(resolve, ms));
+// }
+
+// async function sOmEtHiNg() {
+//     for (let i = 0; i < 100; i++) {
+//         await sleep(2000);
+//         switchPlayer();
+//         console.log("Сработал цикл")
+//     }
+// }
+
+// sOmEtHiNg();
+
 
 // 1, 2, 3
 // 4, 5, 6
