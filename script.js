@@ -18,7 +18,6 @@ class GamePlayer {
         this.name = name;                     // str
         this.role = "";                       // str (⭘ или ✖)
         this.isAct = false;                   // bool
-        this.firstMove = true;                // bool
         this.moveHistory = [];                // collection
         this.frameElement = null;             // DOM элемент фрейма
     }
@@ -181,12 +180,14 @@ function startGame() {
 
             //Обработчик для ячеек, чтобы активный игрок мог сделать ход
             col.addEventListener("click", function () {
-                const actPlayer = gamePlayers.find(p => p.isAct);
+                const actPlayer = gamePlayers.find(p => p.isAct);  //для безопасности номинала переменных использовал сокращение 
                 if (!actPlayer) return;
                 // выход из функии, если ячейка занята. Учитывая, что в игре даже на четвёртом ходе нельзя занимать предыдущую клетку, то это полезная строка
-                if (this.textContent !== "") return; 
+                if (this.textContent !== "") return;
 
                 this.textContent = actPlayer.role;
+
+                actPlayer.moveHistory.push(parseInt(this.dataset.index)); // Сохранение хода игрока
 
                 if (actPlayer && actPlayer.role === "✖") {
                     this.classList.add("col-cross");
@@ -194,7 +195,17 @@ function startGame() {
                 else {
                     this.classList.add("col-nought");
                 }
-                switchPlayer();
+
+                if (checkWin()) {
+                    console.log(`Игрок ${actPlayer.name} победил!`)
+                    
+                    endGame(actPlayer);
+                }
+
+                showOldestMove(actPlayer); // Проверка на самый ранний ход
+                removeOldestMove();
+                switchPlayer(); // Смена игрока
+
             });
 
             row.appendChild(col);
@@ -244,7 +255,6 @@ function activePlayer(playerObjects) {
     const randIndex = Math.floor(Math.random() * playerObjects.length);
 
     playerObjects.forEach((playerObj, index) => {
-
         // Съём активности и её стилей 
         playerObj.isAct = false;
 
@@ -315,21 +325,50 @@ function switchPlayer() {
     }
 }
 
+//Функция обнаружения самого старого хода
+function showOldestMove(actPlayer) {
+    if (actPlayer.moveHistory.length >= 3) {
+        let oldClass;
+        if (actPlayer.role === "✖") {
+            oldClass = "col-oldest-cross";
+        } else if (actPlayer.role === "⭘") {
+            oldClass = "col-oldest-nought";
+        } else {
+            return;
+        }
 
-// function sleep(ms) {
-//     return new Promise(resolve => setTimeout(resolve, ms));
-// }
+        document.querySelectorAll(`.${oldClass}`).forEach(cell => {
+            cell.classList.remove(oldClass);
+        });
+        const oldestCell = document.getElementById(`cell-${actPlayer.moveHistory[0]}`);
+        if (oldestCell) {
+            oldestCell.classList.add(oldClass);
+        }
+    }
+}
 
-// async function sOmEtHiNg() {
-//     for (let i = 0; i < 100; i++) {
-//         await sleep(2000);
-//         switchPlayer();
-//         console.log("Сработал цикл")
-//     }
-// }
+function removeOldestMove() {
+    gamePlayers.forEach(actPlayer => {
+        if (actPlayer.moveHistory.length >= 3) {
+            if (!actPlayer.isAct) {
+                let oldClass, mainClass_of_RoleInCell;
+                if (actPlayer.role === "✖") {
+                    oldClass = "col-oldest-cross";
+                    mainClass_of_RoleInCell = "col-cross";
+                } else if (actPlayer.role === "⭘") {
+                    oldClass = "col-oldest-nought";
+                    mainClass_of_RoleInCell = "col-nought";
+                }
 
-// sOmEtHiNg();
-
+                const oldestCell = document.getElementById(`cell-${actPlayer.moveHistory[0]}`)
+                oldestCell.classList.remove(oldClass, mainClass_of_RoleInCell);
+                oldestCell.textContent = "";
+                oldestCell.dataset.value = "";
+                actPlayer.moveHistory.splice(0, 1);
+            }
+        }
+    });
+}
 
 // 1, 2, 3
 // 4, 5, 6
@@ -347,3 +386,54 @@ const winCombos = [
     [1, 5, 9], // Диагональ с правого нижнего на верхний левый 
     [3, 5, 7]  // Диагональ с левого нижнего на верхний правый
 ];
+
+
+function checkWin() {
+    const actPlayer = gamePlayers.find(p => p.isAct);
+    if (!actPlayer || actPlayer.moveHistory.length < 3) return false;
+
+    for (let i = 0; i < winCombos.length; i++) { //цикл на сопоставление комбо-элементов с текущей историей ходов игрока
+        const combo = winCombos[i];
+        let allFound = true;
+
+        for (let j = 0; j < combo.length; j++) {
+            if (!actPlayer.moveHistory.includes(combo[j])) {
+                allFound = false;
+                break;
+            }
+        }
+        if (allFound) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function endGame (winPlayer) {
+    gameMeshContainer.style.display = "none";
+    playersContainer.style.display = "none";
+
+    const finalText = document.createElement("div");
+    finalText.className = "end-game-text";
+    finalText.textContent = `${winPlayer.name} играя за ${winPlayer.role} победил!`
+
+    mainContent.appendChild(finalText);
+}
+
+// function sleep(ms) {
+//     return new Promise(resolve => setTimeout(resolve, ms));
+// }
+
+// async function sOmEtHiNg() {
+//     for (let i = 0; i < 100; i++) {
+//         await sleep(2000);
+//         switchPlayer();
+//         console.log("Сработал цикл")
+//     }
+// }
+
+// sOmEtHiNg();
+
+
+
+
