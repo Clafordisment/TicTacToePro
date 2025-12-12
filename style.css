@@ -64,22 +64,44 @@ body {
     background-color: transparent;
     border: none;
     color: #DCDCDC;
-    font-size: 25px;
+    font-size: 30px;
     letter-spacing: 1px;
     margin: 30px;
     padding: 10px;
-    transform: translateY(-30px);
     opacity: 0;
     animation: final-text-appear 1s ease-out forwards;
 }
 
 @keyframes final-text-appear {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.9);
+    }
+
     to {
         opacity: 1;
-        transform: translateY(0);
-        transform: scale(1.5);
+        transform: translateY(0) scale(1);
     }
 }
+
+/* Отдельный класс для покачивания */
+.animate-bit {
+    animation: bit-anim 0.5s infinite;
+}
+
+@keyframes bit-anim {
+
+    0% {
+        transform: translateY(0) scale(1.00);
+        text-shadow: 0 0 40px rgba(255, 255, 255, 0);
+    }
+
+    100% {
+        transform: translateY(5px) scale(1.01);
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.425);
+    }
+}
+
 /* #region Интерактивные элементы стартовой страницы*/
 
 .start-interactives-container {
@@ -122,6 +144,7 @@ body {
     border-radius: 6px;
     cursor: pointer;
     margin: 10px;
+    padding: 10px;
     min-width: 80px;
     height: 50px;
     transition: all 0.2s ease;
@@ -340,7 +363,7 @@ td.col-mesh {
 .col-nought {
     font-size: 120px;
     font-weight: 900;
-    text-decoration:solid;
+    text-decoration: solid;
     color: blue;
     opacity: 1;
     transition: color 0.3s ease;
@@ -351,3 +374,43 @@ td.col-mesh {
 }
 
 /* #endregion */
+
+.turn-sounds-button {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    right: 30px;
+    top: 30px;
+    margin: 10px;
+    border: 1px sold #696969;
+    border-radius: 100%;
+    background-color: #1a1a1a;
+    color: #DCDCDC;
+    font-size: 30px;
+    text-decoration: none;
+    transition: background-color 0.2s ease-out;
+}
+
+.turn-sounds-button:hover {
+    background-color: #696969;
+}
+
+.turn-music-button {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    right: 30px;
+    top: 100px;
+    margin: 10px;
+    border: 1px sold #696969;
+    border-radius: 100%;
+    background-color: #1a1a1a;
+    color: #DCDCDC;
+    font-size: 30px;
+    text-decoration: none;
+    transition: background-color 0.2s ease-out;
+}
+
+.turn-music-button:hover {
+    background-color: #696969;
+}

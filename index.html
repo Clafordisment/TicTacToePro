@@ -4,24 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet"> -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <title>TicTacToePro</title>
 </head>
 
 <body>
+    <button class="turn-sounds-button" title="Выключить/Включить все звуки">🕨</button>
+    <button class="turn-music-button" title="Выключить/Включить музыку">♪</button>
     <div class="container">
         <div class="start-interactives-container">
             <input class="add-players-name-input">
             <button class="add-players-name-button">Добавить</button>
         </div>
-        
-        <div class ="game-mesh-container"></div>
+
+        <div class="game-mesh-container"></div>
         <div class="player-frames-container"></div>
         <div class="play-button-location"></div>
     </div>
-
+    <audio id="bgMusic" loop>
+        <source src="sounds/REFLUX.mp3">
+    </audio>
+    <audio id="endBgMusic">
+        <source src="sounds/SH-lvl41.mp3">
+    </audio>
+    <audio id="clickSound">
+        <source src="sounds/soft-click-sound.mp3">
+    </audio>
+    <audio id="switchPlayerSound">
+        <source src="sounds/swap-player-sound.mp3">
+    </audio>
     <script src="script.js"></script>
 </body>
 

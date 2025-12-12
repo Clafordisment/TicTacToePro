@@ -1,14 +1,71 @@
 // Элементы DOM
-const mainContent = document.querySelector(".container");
-const nameInput = document.querySelector(".add-players-name-input");
-const addButton = document.querySelector(".add-players-name-button");
-const playBtnContainer = document.querySelector(".play-button-location");
-const playersContainer = document.querySelector(".player-frames-container");
-const startContainer = document.querySelector(".start-interactives-container");
-const gameMeshContainer = document.querySelector(".game-mesh-container");
+const mainContent = document.querySelector(".container"); //основной контейнер
+const nameInput = document.querySelector(".add-players-name-input");    //поле ввода игроков
+const addButton = document.querySelector(".add-players-name-button");  //кнопка добавления игроков
+const playBtnContainer = document.querySelector(".play-button-location");   //позиционирование кнопки "Играть"
+const playersContainer = document.querySelector(".player-frames-container");    //позиционирование фреймов игроков
+const startContainer = document.querySelector(".start-interactives-container"); //позиционирование элементов стартовой страницы
+const gameMeshContainer = document.querySelector(".game-mesh-container");   //позиционирование сетки игры
 gameMeshContainer.style.display = "none"; // чтобы не делал лишних отступов
 
+//Звуки
+const bgMusic = document.getElementById("bgMusic");
+const endBgMusic = document.getElementById("endBgMusic");
+const clickSound = document.getElementById("clickSound");
+const switchPlayerSound = document.getElementById("switchPlayerSound");
+clickSound.volume = 0.5;
+endBgMusic.volume = 0.5;
+switchPlayerSound.volume = 0.2;
+
+//Кнопки управления звуком
+const turnSoundsBtn = document.querySelector(".turn-sounds-button");
+const turnMusicBtn = document.querySelector(".turn-music-button");
+
 // const  = document.querySelector(".");
+
+let isSoundsTurnOn = true;
+let isMusicTurnOn = true;
+let isEndGame = false; //если игра закончилась - основную музыку заднего фона трогать не будем
+
+turnSoundsBtn.addEventListener("click", function () {
+    if (isSoundsTurnOn) {
+        if (!endGame) { bgMusic.pause(); }
+        endBgMusic.volume = 0;
+        clickSound.volume = 0;
+        switchPlayerSound.volume = 0;
+        isSoundsTurnOn = false;
+        this.style.textDecoration = "line-through";
+    } else {
+        endBgMusic.volume = 0.5;
+        clickSound.volume = 0.5;
+        switchPlayerSound.volume = 0.2;
+
+        if (isMusicTurnOn && !isEndGame) {
+            bgMusic.play();
+        }
+
+        isSoundsTurnOn = true;
+        this.style.textDecoration = "none";
+    }
+});
+
+turnMusicBtn.addEventListener("click", function () {
+    if (!isSoundsTurnOn) {
+        return;
+    }
+
+    if (isMusicTurnOn) {
+        if (!endGame) { bgMusic.pause(); }
+        endBgMusic.volume = 0;
+        isMusicTurnOn = false;
+        this.style.textDecoration = "line-through";
+    } else {
+        if (!endGame) { bgMusic.play(); }
+        endBgMusic.volume = 0.5;
+        isMusicTurnOn = true;
+        this.style.textDecoration = "none";
+    }
+});
 
 let playersPool = [];
 
@@ -180,6 +237,9 @@ function startGame() {
 
             //Обработчик для ячеек, чтобы активный игрок мог сделать ход
             col.addEventListener("click", function () {
+
+                soundPlayAndOverlay(clickSound);
+
                 const actPlayer = gamePlayers.find(p => p.isAct);  //для безопасности номинала переменных использовал сокращение 
                 if (!actPlayer) return;
                 // выход из функии, если ячейка занята. Учитывая, что в игре даже на четвёртом ходе нельзя занимать предыдущую клетку, то это полезная строка
@@ -198,7 +258,7 @@ function startGame() {
 
                 if (checkWin()) {
                     console.log(`Игрок ${actPlayer.name} победил!`)
-                    
+
                     endGame(actPlayer);
                 }
 
@@ -319,8 +379,10 @@ function switchPlayer() {
     if (nextRoleEl) {
         if (nextPlayer.role === "✖") {
             nextRoleEl.classList.add("act-player-role-cross");
+            soundPlayAndOverlay(switchPlayerSound);
         } else if (nextPlayer.role === "⭘") {
             nextRoleEl.classList.add("act-player-role-nought");
+            soundPlayAndOverlay(switchPlayerSound);
         }
     }
 }
@@ -409,31 +471,74 @@ function checkWin() {
     return false;
 }
 
-function endGame (winPlayer) {
+
+
+function endGame(winPlayer) {
+    isEndGame = true;
+
     gameMeshContainer.style.display = "none";
     playersContainer.style.display = "none";
 
+    bgMusic.pause();
+    endBgMusic.play();
+
     const finalText = document.createElement("div");
     finalText.className = "end-game-text";
+
+    // Для анимации покачивания текста
+    setTimeout(() => {
+        finalText.style.opacity = '1';
+        finalText.style.transform = 'translateY(0)';
+        finalText.classList.add('animate-bit');
+    }, 2000);
+
+    setTimeout(() => {
+        finalText.classList.remove('animate-bit');
+    }, 33000);
+
     finalText.textContent = `${winPlayer.name} играя за ${winPlayer.role} победил!`
 
+    mainContent.style.padding = "90px";
     mainContent.appendChild(finalText);
+
 }
 
-// function sleep(ms) {
-//     return new Promise(resolve => setTimeout(resolve, ms));
-// }
+// Добавление музыки на задний фон
+let musicStarted = false;
 
-// async function sOmEtHiNg() {
-//     for (let i = 0; i < 100; i++) {
-//         await sleep(2000);
-//         switchPlayer();
-//         console.log("Сработал цикл")
-//     }
-// }
+function startBgMusic() {
+    if (musicStarted) return;
+    musicStarted = true;
 
-// sOmEtHiNg();
+    document.removeEventListener("mousemove", startBgMusic);
 
+    bgMusic.volume = 0;
+
+    soundPlayAndOverlay(bgMusic, function(error) {
+        // Этот callback выполнится только при ошибке
+        console.log("Не удалось запустить музыку:", error);
+        musicStarted = false;
+        document.addEventListener("mousemove", startBgMusic);
+    });
+
+    const fadeIn = setInterval(() => {
+        if (bgMusic.volume < 0.2) {
+            bgMusic.volume += 0.0001;
+        } else {
+            clearInterval(fadeIn);
+        }
+    }, 900);
+}
+
+document.addEventListener("mousemove", startBgMusic);
+
+// Функция обработки звуков, чтобы скрипт не падал и звуки могли воспроизводиться несколько одновременно
+function soundPlayAndOverlay(sound) {
+    sound.currentTime = 0; //для наложения звука самого на себя (в случае, если клики будут очень быстрыми)
+    sound.play().catch(e => {
+        if (e.name !== 'NotAllowedError') console.log(e); //чтобы не упал скрипт при возникновении ошибки
+    });
+}
 
 
 
